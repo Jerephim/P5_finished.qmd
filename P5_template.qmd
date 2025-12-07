@@ -240,7 +240,11 @@ __Validate that the data provided on GitHub lines up with the article by recreat
 _type your results and analysis here_
 For these graphs I basically just coppied the ones that were in the article. I had to turn it sideways and was unable to get it to be in the same order as the article or put the percentage next to the bars, but I think this was pretty close.
 ```{python}
-movie_order = [
+# Visual 1: Which 'Star Wars' Movies Have You Seen?
+
+# Columns that tell us whether each film was seen
+movie_cols = ["seen_ep1", "seen_ep2", "seen_ep3", "seen_ep4", "seen_ep5", "seen_ep6"]
+movie_names = [
     "The Phantom Menace",
     "Attack of the Clones",
     "Revenge of the Sith",
@@ -248,13 +252,31 @@ movie_order = [
     "The Empire Strikes Back",
     "Return of the Jedi",
 ]
-movie_probs["film"] = pd.Categorical(movie_probs["film"],
-                                     categories=movie_order,
-                                     ordered=True)
+
+# Only use people who have seen at least one Star Wars film
+mask_seen_any = sw["seen_any"] == "Yes"
+
+# Build a small table with the share who have seen each film
+rows = []
+for col, name in zip(movie_cols, movie_names):
+    prob = sw.loc[mask_seen_any, col].notna().mean()
+    rows.append({"film": name, "prob_seen": prob})
+
+movie_probs = pd.DataFrame(rows)
+
+# Put the films in the same order as the article
+movie_order = movie_names
+movie_probs["film"] = pd.Categorical(
+    movie_probs["film"],
+    categories=movie_order,
+    ordered=True
+)
 movie_probs = movie_probs.sort_values("film")
 
+# Turn probabilities into percents for plotting
 movie_probs["prob_seen_pct"] = (movie_probs["prob_seen"] * 100).round(0)
 
+# Make the bar chart
 ggplot(movie_probs, aes(x="prob_seen_pct", y="film")) + \
     geom_bar(stat="identity") + \
     ggsize(800, 400) + \
@@ -264,6 +286,7 @@ ggplot(movie_probs, aes(x="prob_seen_pct", y="film")) + \
         x="Percent of respondents",
         y=""
     )
+
 ```
 
 ```{python}
